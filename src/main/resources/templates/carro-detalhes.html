@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Atualizar Veículo</title>
+</head>
+<body>
+<h1>Atualizar Veículo</h1>
+<form th:action="@{|/veiculos/atualizar/${veiculo.placa}|}" th:object="${veiculo}" method="post">
+    <label>Marca:</label>
+    <input type="text" th:field="*{marca}" />
+    <br/>
+    <label>Modelo:</label>
+    <input type="text" th:field="*{modelo}" />
+    <br/>
+    <label>Cor:</label>
+    <input type="text" th:field="*{cor}" />
+    <br/>
+    <label>Placa:</label>
+    <input type="text" th:field="*{placa}" />
+    <br/>
+    <label>Ano:</label>
+    <input type="text" th:field="*{ano}" />
+    <br/>
+    <label>Valor:</label>
+    <input type="text" th:field="*{valor}" />
+    <br/>
+    <label>Imagem:</label>
+    <input type="text" th:field="*{imagem}" />
+    <br/>
+    <label>Observação:</label>
+    <input type="text" th:field="*{observacao}" />
+    <br/>
+    <label>Fornecedor:</label>
+    <input type="text" th:field="*{fornecedor}" />
+    <br/>
+    <button type="submit">Atualizar</button>
+</form>
+<a th:href="@{/veiculos}">Voltar para a lista</a>
+</body>
+</html>

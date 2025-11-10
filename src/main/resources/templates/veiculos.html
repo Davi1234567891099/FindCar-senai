@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>FindCar - Veículos</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/script.js}" defer></script>
+    <style>
+        #addVehicleBtn {
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            background-color: #1e90ff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s, transform 0.2s;
+        }
+        #addVehicleBtn:hover {
+            background-color: #0d6efd;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <button class="menu-btn">&#9776;</button>
+        <h1>FindCar - Veículos</h1>
+    </header>
+
+    <div class="sidebar">
+        <ul>
+            <li><a th:href="@{/}">Home</a></li>
+            <li><a th:href="@{/veiculos}" class="active">Veículos</a></li>
+            <li><a href="../templates/clientes.html">Clientes</a></li>
+            <li><a href="../templates/fornecedores.html">Fornecedores</a></li>
+            <li><a href="../templates/funcionarios.html">Funcionários</a></li>
+            <li><a href="../templates/vendas.html">Vendas</a></li>
+        </ul>
+    </div>
+
+    <main>
+        <button id="addVeiculoBtn" onclick="openVehicleCreate()">Adicionar Veículo</button>
+
+        <table class="data-table" id="veiculosTable">
+            <thead>
+                <tr>
+					<th>Placa</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Ano de Fabricação</th>
+                    <th>Cor</th>
+                    <th>Valor</th>
+                    <th>Observação</th>
+                    <th>Fornecedor</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="veiculo : ${veiculos}">
+					<td th:text="${veiculo.placa}"></td>
+                    <td th:text="${veiculo.marca}"></td>
+                    <td th:text="${veiculo.modelo}"></td>
+                    <td th:text="${veiculo.ano}"></td>
+                    <td th:text="${veiculo.cor}"></td>
+                    <td class="valor-cell" th:text="${veiculo.valor}"></td>
+                    <td th:text="${veiculo.observacao}"></td>
+                    <td th:text="${veiculo.fornecedor}"></td>
+                    <td>
+                        <a href="#"
+                           th:attr="data-placa=${veiculo.placa},
+						   			data-marca=${veiculo.marca},
+                                    data-modelo=${veiculo.modelo},
+                                    data-ano=${veiculo.ano},
+                                    data-cor=${veiculo.cor},
+                                    data-valor=${veiculo.valor},
+                                    data-observacao=${veiculo.observacao},
+                                    data-fornecedor=${veiculo.fornecedor}"
+                           onclick="openCarEdit(this); return false;">Editar</a>
+                        <a th:href="@{|/veiculos/excluir/${veiculo.placa}|}">Excluir</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+
+    <div class="modal" id="formModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeForm()">&times;</span>
+            <h2 id="formTitle">Adicionar Veículo</h2>
+            <form th:action="@{/veiculos/novo}" th:object="${veiculo}" method="post" data-server-form="true">
+				<label>Placa:</label>
+				<input type="text" th:field="*{placa}" required minlength="8" maxlength="8" pattern="^[A-Za-z0-9]{3}-[A-Za-z0-9]{4}$" placeholder="Ex: ABC-1B34" oninput="let v=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7); this.value = v.length>3 ? v.slice(0,3)+'-'+v.slice(3) : v;">
+                <label>Marca:</label>
+                <input type="text" th:field="*{marca}" required>
+                <label>Modelo:</label>
+                <input type="text" th:field="*{modelo}" required>
+                <label>Ano de Fabricação:</label>
+                <input type="text" th:field="*{ano}" required inputmode="numeric" pattern="^\d{4}$" minlength="4" maxlength="4" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)" placeholder="Ex: 2021">
+                <label>Cor:</label>
+                <input type="text" th:field="*{cor}" required>
+                <label>Valor:</label>
+                <input type="text" class="money-input" th:field="*{valor}" required>
+                <label>Observação:</label>
+                <input type="text" th:field="*{observacao}">
+                <label>Fornecedor:</label>
+                <input type="text" th:field="*{fornecedor}" required>
+                <button type="submit" id="formSubmitBtn">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h3>Tem certeza que deseja excluir este veículo?</h3>
+            <button onclick="confirmDelete()">Confirmar</button>
+            <button onclick="closeDelete()">Cancelar</button>
+        </div>
+    </div>
+</body>
+</html>

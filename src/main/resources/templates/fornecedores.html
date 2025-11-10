@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>FindCar - Fornecedores</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/script.js" defer></script>
+    <style>
+        #addSupplierBtn {
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            background-color: #1e90ff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s, transform 0.2s;
+        }
+        #addSupplierBtn:hover {
+            background-color: #0d6efd;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body data-module="fornecedor">
+    <header>
+        <button class="menu-btn">&#9776;</button>
+        <h1>FindCar - Fornecedores</h1>
+    </header>
+
+    <div class="sidebar">
+        <ul>
+            <li><a href="dashboard.html">Home</a></li>
+            <li><a href="veiculos.html">Veículos</a></li>
+            <li><a href="clientes.html">Clientes</a></li>
+            <li><a href="fornecedores.html" class="active">Fornecedores</a></li>
+            <li><a href="funcionarios.html">Funcionários</a></li>
+            <li><a href="vendas.html">Vendas</a></li>
+        </ul>
+    </div>
+
+    <main>
+        <button id="addSupplierBtn" onclick="openForm('add','fornecedor')">Adicionar Fornecedor</button>
+
+        <table class="data-table" id="fornecedoresTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Contato</th>
+                    <th>Email</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </main>
+
+    <div class="modal" id="formModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeForm()">&times;</span>
+            <h2 id="formTitle">Adicionar Fornecedor</h2>
+            <form id="supplierForm">
+                <input type="hidden" id="fornecedorId">
+                <label>Nome:</label>
+                <input type="text" id="fornecedorNome" required>
+                <label>Contato:</label>
+                <input type="text" id="fornecedorContato" required>
+                <label>Email:</label>
+                <input type="email" id="fornecedorEmail" required>
+                <button type="submit" id="formSubmitBtn">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h3>Tem certeza que deseja excluir este fornecedor?</h3>
+            <button onclick="confirmDelete()">Confirmar</button>
+            <button onclick="closeDelete()">Cancelar</button>
+        </div>
+    </div>
+</body>
+</html>

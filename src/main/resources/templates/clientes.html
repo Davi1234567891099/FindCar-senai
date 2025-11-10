@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>FindCar - Clientes</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/script.js" defer></script>
+    <style>
+        /* Botão adicionar */
+        #addClientBtn {
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            background-color: #1e90ff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s, transform 0.2s;
+        }
+        #addClientBtn:hover {
+            background-color: #0d6efd;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body data-module="cliente">
+    <header>
+        <button class="menu-btn">&#9776;</button>
+        <h1>FindCar - Clientes</h1>
+    </header>
+
+    <div class="sidebar">
+        <ul>
+            <li><a href="dashboard.html">Home</a></li>
+            <li><a href="veiculos.html">Veículos</a></li>
+            <li><a href="clientes.html" class="active">Clientes</a></li>
+            <li><a href="fornecedores.html">Fornecedores</a></li>
+            <li><a href="funcionarios.html">Funcionários</a></li>
+            <li><a href="vendas.html">Vendas</a></li>
+            
+        </ul>
+    </div>
+
+    <main>
+        <button id="addClientBtn" onclick="openForm('add','cliente')">Adicionar Cliente</button>
+
+        <table class="data-table" id="clientesTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome Completo</th>
+                    <th>CPF</th>
+                    <th>Profissão</th>
+                    <th>Email</th>
+                    <th>Endereço</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </main>
+
+    <div class="modal" id="formModal">
+        <div class="modal-content">
+            <span class="close" onclick="closeForm()">&times;</span>
+            <h2 id="formTitle">Adicionar Cliente</h2>
+            <form id="clientForm">
+                <input type="hidden" id="clienteId">
+                <label>Nome Completo:</label>
+                <input type="text" id="clienteNome" required>
+                <label>CPF:</label>
+                <input type="text" id="clienteCPF">
+                <label>Profissão:</label>
+                <input type="email" id="clienteProfissao" required>
+                <label>Email:</label>
+                <input type="text" id="clienteEmail" required>
+                <label>Endereço:</label>
+                <input type="text" id="clienteEndereco" required>
+                <button type="submit" id="formSubmitBtn">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <h3>Tem certeza que deseja excluir este cliente?</h3>
+            <button onclick="confirmDelete()">Confirmar</button>
+            <button onclick="closeDelete()">Cancelar</button>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Veiculo {
@@ -21,7 +23,6 @@ public class Veiculo {
 
     @Column(nullable = false)
     private String cor;
-
     
     @Column(nullable = false)
     private String ano;
@@ -34,8 +35,15 @@ public class Veiculo {
     @Column(length = 255, nullable = true)
     private String observacao;
 
+    @ManyToOne
+    @JoinColumn(name = "fornecedor_id", nullable = false)
+    private Fornecedor fornecedor;
+
+    @Column(nullable = false, unique = true)
+    private String chassi;
+
     @Column(nullable = false)
-    private String fornecedor;
+    private boolean vendido = false;
 
     public String getMarca() {
         return marca;
@@ -101,11 +109,27 @@ public class Veiculo {
         this.observacao = observacao;
     }
 
-    public String getFornecedor() {
+    public Fornecedor getFornecedor() {
         return fornecedor;
     }
 
-    public void setFornecedor(String fornecedor) {
+    public void setFornecedor(Fornecedor fornecedor) {
         this.fornecedor = fornecedor;
+    }
+
+    public String getChassi() {
+        return chassi;
+    }
+
+    public void setChassi(String chassi) {
+        this.chassi = chassi;
+    }
+
+    public boolean isVendido() {
+        return vendido;
+    }
+
+    public void setVendido(boolean vendido) {
+        this.vendido = vendido;
     }
 }

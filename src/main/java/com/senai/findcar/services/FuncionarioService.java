@@ -1,0 +1,26 @@
+package com.senai.findcar.services;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.senai.findcar.exceptions.VendaVinculadaException;
+import com.senai.findcar.models.Funcionario;
+import com.senai.findcar.models.Venda;
+import com.senai.findcar.repository.VendaRepository;
+
+@Service
+public class FuncionarioService {
+    final String FUNCIONARIO_COM_VENDA = "Funcionario possui vendas vinculadas, não é possível excluir";
+
+    @Autowired
+    private VendaRepository vendaRepository;
+
+    public void verificarFuncionarioComVenda(Funcionario funcionario) {
+        Optional<Venda> vendaOpt = vendaRepository.findByFuncionario(funcionario);
+        if(vendaOpt.isPresent()) {
+            throw new VendaVinculadaException(FUNCIONARIO_COM_VENDA);
+        }
+    }
+}

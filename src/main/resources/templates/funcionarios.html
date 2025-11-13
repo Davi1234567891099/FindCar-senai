@@ -1,85 +1,192 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>FindCar - Funcionários</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <script src="../js/script.js" defer></script>
-    <style>
-        #addEmployeeBtn {
-            padding: 10px 15px;
-            margin-bottom: 15px;
-            background-color: #1e90ff;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.2s, transform 0.2s;
-        }
-        #addEmployeeBtn:hover {
-            background-color: #0d6efd;
-            transform: translateY(-2px);
-        }
-    </style>
+	<meta charset="UTF-8">
+	<title>FindCar - Funcionários</title>
+	<link rel="stylesheet" th:href="@{/css/style.css}">
+	<script th:src="@{/js/script.js}" defer></script>
+	<style>
+		.alert {
+			padding: 10px 14px;
+			border-radius: 6px;
+			margin: 10px 0 16px 0;
+		}
+		.alert-success {
+			background: #e8f5e9;
+			color: #1b5e20;
+			border: 1px solid #c8e6c9;
+		}
+		.alert-danger {
+			background: #ffebee;
+			color: #b71c1c;
+			border: 1px solid #ffcdd2;
+		}
+		.req::after {
+			content: " *";
+			color: #c62828;
+			font-weight: 700;
+		}
+		.required-hint {
+			margin: 0 0 10px 0;
+			color: #555;
+			font-size: 0.9rem;
+		}
+	</style>
+	<script>
+		function onlyDigits(s){ return (s || '').replace(/\D+/g,''); }
+		function maskCpfInput(el){
+			let d = onlyDigits(el.value).slice(0, 11);
+			let out = d;
+			if (d.length > 9) out = d.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*$/, '$1.$2.$3-$4');
+			else if (d.length > 6) out = d.replace(/^(\d{3})(\d{3})(\d{0,3}).*$/, '$1.$2.$3');
+			else if (d.length > 3) out = d.replace(/^(\d{3})(\d{0,3}).*$/, '$1.$2');
+			el.value = out;
+		}
+		function maskTelefoneInput(el){
+			const d = onlyDigits(el.value).slice(0, 11);
+			if (d.length <= 2) { el.value = d; return; }
+			const ddd = d.slice(0,2);
+			if (d.length <= 6) {
+				el.value = `(${ddd}) ${d.slice(2)}`;
+				return;
+			}
+			if (d.length <= 10) {
+				el.value = `(${ddd}) ${d.slice(2,6)}-${d.slice(6)}`;
+				return;
+			}
+			el.value = `(${ddd}) ${d.slice(2,7)}-${d.slice(7,11)}`;
+		}
+	</script>
 </head>
-<body data-module="funcionario">
-    <header>
-        <button class="menu-btn">&#9776;</button>
-        <h1>FindCar - Funcionários</h1>
-    </header>
+<body>
+	<header>
+		<button class="menu-btn">&#9776;</button>
+		<h1>FindCar - Funcionários</h1>
+	</header>
 
-    <div class="sidebar">
-        <ul>
-            <li><a href="dashboard.html">Home</a></li>
-            <li><a href="veiculos.html">Veículos</a></li>
-            <li><a href="clientes.html">Clientes</a></li>
-            <li><a href="fornecedores.html">Fornecedores</a></li>
-            <li><a href="funcionarios.html" class="active">Funcionários</a></li>
-            <li><a href="vendas.html">Vendas</a></li>
-        </ul>
-    </div>
+	<div class="sidebar">
+		<ul>
+			<li><a th:href="@{/}">Home</a></li>
+			<li><a th:href="@{/veiculos}">Veículos</a></li>
+			<li><a th:href="@{/clientes}">Clientes</a></li>
+			<li><a th:href="@{/fornecedores}">Fornecedores</a></li>
+			<li><a th:href="@{/funcionarios}" class="active">Funcionários</a></li>
+			<li><a th:href="@{/vendas}">Vendas</a></li>
+		</ul>
+	</div>
 
-    <main>
-        <button id="addEmployeeBtn" onclick="openForm('add','funcionario')">Adicionar Funcionário</button>
+	<main>
+		<div th:if="${param.error}" class="alert alert-danger"
+			 th:text="${param.error[0] == 'cpf_existente' ? 'Já existe um funcionário com este CPF.' : 'Não foi possível concluir a operação.'}">
+			Não foi possível concluir a operação.
+		</div>
+		<div th:if="${param.success}" class="alert alert-success"
+			 th:text="${param.success[0] == 'cadastrado' ? 'Funcionário cadastrado com sucesso.' : (param.success[0] == 'atualizado' ? 'Funcionário atualizado com sucesso.' : (param.success[0] == 'excluido' ? 'Funcionário excluído com sucesso.' : 'Ação concluída.'))}">
+			Ação concluída.
+		</div>
 
-        <table class="data-table" id="funcionariosTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome</th>
-                    <th>Cargo</th>
-                    <th>Email</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </main>
+		<div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+			<button id="addFuncionarioBtn" onclick="openEmployeeCreate()">Adicionar Funcionário</button>
+			<button id="searchFuncionarioBtn" onclick="toggleEmployeeSearch()" style="background-color: #6c757d; color: #fff;">Buscar Funcionário</button>
+		</div>
 
-    <div class="modal" id="formModal">
-        <div class="modal-content">
-            <span class="close" onclick="closeForm()">&times;</span>
-            <h2 id="formTitle">Adicionar Funcionário</h2>
-            <form id="employeeForm">
-                <input type="hidden" id="funcionarioId">
-                <label>Nome:</label>
-                <input type="text" id="funcionarioNome" required>
-                <label>Cargo:</label>
-                <input type="text" id="funcionarioCargo" required>
-                <label>Email:</label>
-                <input type="email" id="funcionarioEmail" required>
-                <button type="submit" id="formSubmitBtn">Salvar</button>
-            </form>
-        </div>
-    </div>
+		<div id="employeeSearchPanel" style="display:none; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+			<form th:action="@{/funcionarios}" method="get" data-server-form="true" style="display:grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 10px; align-items:end;">
+				<div>
+					<label>Nome</label>
+					<input type="text" name="nome" th:value="${param.nome}">
+				</div>
+				<div>
+					<label>CPF</label>
+					<input type="text" name="cpf" th:value="${param.cpf}" placeholder="CPF (parcial ou completo)">
+				</div>
+				<div>
+					<label>Cargo</label>
+					<input type="text" name="cargo" th:value="${param.cargo}">
+				</div>
+				<div>
+					<label>Telefone</label>
+					<input type="text" name="telefone" th:value="${param.telefone}">
+				</div>
+				<div>
+					<label>Email</label>
+					<input type="text" name="email" th:value="${param.email}">
+				</div>
+				<div style="grid-column: 1 / -1; display:flex; gap:8px;">
+					<button type="submit" style="padding: 8px 12px; background:#1e90ff; color:#fff; border:none; border-radius:6px;">Aplicar filtros</button>
+					<a th:href="@{/funcionarios}" style="padding: 8px 12px; background:#f1f1f1; color:#333; border-radius:6px; text-decoration:none;">Limpar</a>
+				</div>
+			</form>
+		</div>
 
-    <div class="modal" id="deleteModal">
-        <div class="modal-content">
-            <h3>Tem certeza que deseja excluir este funcionário?</h3>
-            <button onclick="confirmDelete()">Confirmar</button>
-            <button onclick="closeDelete()">Cancelar</button>
-        </div>
-    </div>
+		<table class="data-table" id="funcionariosTable">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Nome</th>
+					<th>CPF</th>
+					<th>Cargo</th>
+					<th>Telefone</th>
+					<th>Email</th>
+					<th>Endereço</th>
+					<th>Ações</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="f : ${funcionarios}">
+					<td th:text="${f.id}"></td>
+					<td th:text="${f.nome}"></td>
+					<td class="doc-cpf" th:text="${f.cpf}"></td>
+					<td th:text="${f.cargo}"></td>
+					<td th:text="${f.telefone}"></td>
+					<td th:text="${f.email}"></td>
+					<td th:text="${f.endereco}"></td>
+					<td>
+						<a href="#"
+						   th:attr="data-id=${f.id},
+									data-nome=${f.nome},
+									data-cpf=${f.cpf},
+									data-cargo=${f.cargo},
+									data-telefone=${f.telefone},
+									data-email=${f.email},
+									data-endereco=${f.endereco}"
+						   onclick="openEmployeeEdit(this); return false;">Editar</a>
+						<a th:href="@{|/funcionarios/excluir/${f.id}|}" onclick="return confirm('Tem certeza que deseja excluir este funcionário?');">Excluir</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</main>
+
+	<div class="modal" id="formModal">
+		<div class="modal-content">
+			<span class="close" onclick="closeForm()">&times;</span>
+			<h2 id="formTitle">Adicionar Funcionário</h2>
+			<p class="required-hint">Campos marcados com <strong>*</strong> são obrigatórios.</p>
+			<form th:action="@{/funcionarios/novo}" th:object="${funcionario}" method="post" data-server-form="true">
+				<label class="req">Nome:</label>
+				<input type="text" th:field="*{nome}" required>
+				<label class="req">CPF:</label>
+				<input type="text" th:field="*{cpf}" minlength="14" maxlength="14" oninput="maskCpfInput(this)" pattern="^\d{3}\.\d{3}\.\d{3}-\d{2}$" placeholder="000.000.000-00" title="Informe um CPF válido no formato 000.000.000-00" required>
+				<label class="req">Cargo:</label>
+				<input type="text" th:field="*{cargo}" required>
+				<label class="req">Telefone:</label>
+				<input type="text" th:field="*{telefone}" required oninput="maskTelefoneInput(this)" pattern="^\(\d{2}\)\s\d{4,5}-\d{4}$" placeholder="(11) 98765-4321" title="Formato esperado: (11) 99999-9999 ou (11) 9999-9999">
+				<label class="req">Email:</label>
+				<input type="email" th:field="*{email}" required pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$" placeholder="usuario@dominio.com" title="Informe um e-mail válido, ex.: usuario@dominio.com">
+				<label class="req">Endereço:</label>
+				<input type="text" th:field="*{endereco}" required>
+				<button type="submit" id="formSubmitBtn">Salvar</button>
+			</form>
+		</div>
+	</div>
+
+	<div class="modal" id="deleteModal" style="display:none;">
+		<div class="modal-content">
+			<h3>Tem certeza que deseja excluir este funcionário?</h3>
+			<button onclick="confirmDelete()">Confirmar</button>
+			<button onclick="closeDelete()">Cancelar</button>
+		</div>
+	</div>
 </body>
 </html>

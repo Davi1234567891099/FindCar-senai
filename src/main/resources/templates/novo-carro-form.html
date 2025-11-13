@@ -2,27 +2,43 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Adicionar Veículo</title>
+    <style>
+        .req::after {
+            content: " *";
+            color: #c62828;
+            font-weight: 700;
+        }
+        .required-hint {
+            margin: 0 0 10px 0;
+            color: #555;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
 <h1>Adicionar Veículo</h1>
+<p class="required-hint">Campos marcados com <strong>*</strong> são obrigatórios.</p>
 <form th:action="@{/veiculos/novo}" th:object="${veiculo}" method="post">
-    <label>Marca:</label>
-    <input type="text" th:field="*{marca}" />
+    <label class="req">Marca:</label>
+    <input type="text" th:field="*{marca}" required />
     <br/>
-    <label>Modelo:</label>
-    <input type="text" th:field="*{modelo}" />
+    <label class="req">Modelo:</label>
+    <input type="text" th:field="*{modelo}" required />
     <br/>
-    <label>Cor:</label>
-    <input type="text" th:field="*{cor}" />
+    <label class="req">Cor:</label>
+    <input type="text" th:field="*{cor}" required />
     <br/>
-    <label>Placa:</label>
+    <label class="req">Placa:</label>
     <input type="text" th:field="*{placa}" required minlength="8" maxlength="8" pattern="^[A-Za-z0-9]{3}-[A-Za-z0-9]{4}$" placeholder="Ex: ABC-1B34" oninput="let v=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7); this.value = v.length>3 ? v.slice(0,3)+'-'+v.slice(3) : v;" />
     <br/>
-    <label>Ano:</label>
-    <input type="text" th:field="*{ano}" inputmode="numeric" pattern="^\d{4}$" minlength="4" maxlength="4" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)" placeholder="Ex: 2021" />
+    <label class="req">Chassi:</label>
+    <input type="text" th:field="*{chassi}" required minlength="17" maxlength="17" pattern="^[A-HJ-NPR-Z0-9]{17}$" placeholder="Ex: 9BWZZZ377VT004251" oninput="this.value=this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'').slice(0,17)" />
     <br/>
-    <label>Valor:</label>
-    <input type="text" th:field="*{valor}" />
+    <label class="req">Ano:</label>
+    <input type="text" th:field="*{ano}" required inputmode="numeric" pattern="^\d{4}$" minlength="4" maxlength="4" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)" placeholder="Ex: 2021" />
+    <br/>
+    <label class="req">Valor:</label>
+    <input type="text" th:field="*{valor}" required />
     <br/>
     <label>Imagem:</label>
     <input type="text" th:field="*{imagem}" />
@@ -30,8 +46,8 @@
     <label>Observação:</label>
     <input type="text" th:field="*{observacao}" />
     <br/>
-    <label>Fornecedor:</label>
-    <input type="text" th:field="*{fornecedor}" />
+    <label class="req">Fornecedor:</label>
+    <input type="text" th:field="*{fornecedor}" required />
     <br/>
     <button type="submit">Salvar</button>
 </form>

@@ -17,9 +17,48 @@
             font-weight: 500;
             transition: background 0.2s, transform 0.2s;
         }
+
         #addVehicleBtn:hover {
             background-color: #0d6efd;
             transform: translateY(-2px);
+        }
+
+        #searchVeiculoBtn {
+            background-color: #6c757d;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s, transform 0.2s;
+            margin-bottom: 15px;
+        }
+
+        #searchVeiculoBtn:hover {
+            background-color: #5c636a;
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin: 10px 0 16px 0;
+        }
+        .alert-success {
+            background: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #c8e6c9;
+        }
+        /* Indicação de campos obrigatórios */
+        .req::after {
+            content: " *";
+            color: #c62828;
+            font-weight: 700;
+        }
+        .required-hint {
+            margin: 0 0 10px 0;
+            color: #555;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -33,20 +72,65 @@
         <ul>
             <li><a th:href="@{/}">Home</a></li>
             <li><a th:href="@{/veiculos}" class="active">Veículos</a></li>
-            <li><a href="../templates/clientes.html">Clientes</a></li>
-            <li><a href="../templates/fornecedores.html">Fornecedores</a></li>
-            <li><a href="../templates/funcionarios.html">Funcionários</a></li>
-            <li><a href="../templates/vendas.html">Vendas</a></li>
+            <li><a th:href="@{/clientes}">Clientes</a></li>
+            <li><a th:href="@{/fornecedores}">Fornecedores</a></li>
+            <li><a th:href="@{/funcionarios}">Funcionários</a></li>
+            <li><a th:href="@{/vendas}">Vendas</a></li>
         </ul>
     </div>
 
     <main>
-        <button id="addVeiculoBtn" onclick="openVehicleCreate()">Adicionar Veículo</button>
+        <div th:if="${param.error}" class="alert alert-danger"
+             th:text="${param.error[0] == 'fornecedor_invalido' ? 'Fornecedor inválido. Selecione um fornecedor cadastrado.' : (param.error[0] == 'fornecedor_obrigatorio' ? 'Selecione um fornecedor para cadastrar o veículo.' : 'Não foi possível concluir a operação.')}">
+            Não foi possível concluir a operação.
+        </div>
+        <div th:if="${param.success}" class="alert alert-success"
+             th:text="${param.success[0] == 'cadastrado' ? 'Veículo cadastrado com sucesso.' : (param.success[0] == 'atualizado' ? 'Veículo atualizado com sucesso.' : (param.success[0] == 'excluido' ? 'Veículo excluído com sucesso.' : 'Ação concluída.'))}">
+            Ação concluída.
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+            <button id="addVeiculoBtn" onclick="openVehicleCreate()">Adicionar Veículo</button>
+            <button id="searchVeiculoBtn" onclick="toggleVehicleSearch()" style="background-color: #6c757d; color: #fff;">Buscar Veículo</button>
+        </div>
+
+        <div id="vehicleSearchPanel" style="display:none; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <form th:action="@{/veiculos}" method="get" data-server-form="true" style="display:grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 10px; align-items:end;">
+                <div>
+                    <label>Placa</label>
+                    <input type="text" name="placa" th:value="${param.placa}" placeholder="Ex: ABC-1B34" oninput="let vv=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7); this.value = vv.length>3 ? vv.slice(0,3)+'-'+vv.slice(3) : vv;">
+                </div>
+                <div>
+                    <label>Chassi</label>
+                    <input type="text" name="chassi" th:value="${param.chassi}" placeholder="Ex: 9BWZZZ377VT004251" oninput="this.value=this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'').slice(0,17)">
+                </div>
+                <div>
+                    <label>Marca</label>
+                    <input type="text" name="marca" th:value="${param.marca}">
+                </div>
+                <div>
+                    <label>Modelo</label>
+                    <input type="text" name="modelo" th:value="${param.modelo}">
+                </div>
+                <div>
+                    <label>Valor mín.</label>
+                    <input type="text" class="money-input" name="minValor" th:value="${param.minValor}">
+                </div>
+                <div>
+                    <label>Valor máx.</label>
+                    <input type="text" class="money-input" name="maxValor" th:value="${param.maxValor}">
+                </div>
+                <div style="grid-column: 1 / -1; display:flex; gap:8px;">
+                    <button type="submit" style="padding: 8px 12px; background:#1e90ff; color:#fff; border:none; border-radius:6px;">Aplicar filtros</button>
+                    <a th:href="@{/veiculos}" style="padding: 8px 12px; background:#f1f1f1; color:#333; border-radius:6px; text-decoration:none;">Limpar</a>
+                </div>
+            </form>
+        </div>
 
         <table class="data-table" id="veiculosTable">
             <thead>
                 <tr>
 					<th>Placa</th>
+                    <th>Chassi</th>
                     <th>Marca</th>
                     <th>Modelo</th>
                     <th>Ano de Fabricação</th>
@@ -60,25 +144,27 @@
             <tbody>
                 <tr th:each="veiculo : ${veiculos}">
 					<td th:text="${veiculo.placa}"></td>
+                    <td th:text="${veiculo.chassi}"></td>
                     <td th:text="${veiculo.marca}"></td>
                     <td th:text="${veiculo.modelo}"></td>
                     <td th:text="${veiculo.ano}"></td>
                     <td th:text="${veiculo.cor}"></td>
                     <td class="valor-cell" th:text="${veiculo.valor}"></td>
                     <td th:text="${veiculo.observacao}"></td>
-                    <td th:text="${veiculo.fornecedor}"></td>
+                    <td th:text="${veiculo.fornecedor.nome}"></td>
                     <td>
                         <a href="#"
                            th:attr="data-placa=${veiculo.placa},
+						   			data-chassi=${veiculo.chassi},
 						   			data-marca=${veiculo.marca},
                                     data-modelo=${veiculo.modelo},
                                     data-ano=${veiculo.ano},
                                     data-cor=${veiculo.cor},
                                     data-valor=${veiculo.valor},
                                     data-observacao=${veiculo.observacao},
-                                    data-fornecedor=${veiculo.fornecedor}"
+                                    data-fornecedor-id=${veiculo.fornecedor.id}"
                            onclick="openCarEdit(this); return false;">Editar</a>
-                        <a th:href="@{|/veiculos/excluir/${veiculo.placa}|}">Excluir</a>
+                        <a th:href="@{|/veiculos/excluir/${veiculo.placa}|}" onclick="return confirm('Tem certeza que deseja excluir este veículo?');">Excluir</a>
                     </td>
                 </tr>
             </tbody>
@@ -89,24 +175,31 @@
         <div class="modal-content">
             <span class="close" onclick="closeForm()">&times;</span>
             <h2 id="formTitle">Adicionar Veículo</h2>
+            <p class="required-hint">Campos marcados com <strong>*</strong> são obrigatórios.</p>
             <form th:action="@{/veiculos/novo}" th:object="${veiculo}" method="post" data-server-form="true">
-				<label>Placa:</label>
+				<label class="req">Placa:</label>
 				<input type="text" th:field="*{placa}" required minlength="8" maxlength="8" pattern="^[A-Za-z0-9]{3}-[A-Za-z0-9]{4}$" placeholder="Ex: ABC-1B34" oninput="let v=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7); this.value = v.length>3 ? v.slice(0,3)+'-'+v.slice(3) : v;">
-                <label>Marca:</label>
+                <label class="req">Chassi:</label>
+                <input type="text" th:field="*{chassi}" required minlength="17" maxlength="17" pattern="^[A-HJ-NPR-Z0-9]{17}$" placeholder="Ex: 9BWZZZ377VT004251" oninput="this.value=this.value.toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g,'').slice(0,17)">
+                <label class="req">Marca:</label>
                 <input type="text" th:field="*{marca}" required>
-                <label>Modelo:</label>
+                <label class="req">Modelo:</label>
                 <input type="text" th:field="*{modelo}" required>
-                <label>Ano de Fabricação:</label>
+                <label class="req">Ano de Fabricação:</label>
                 <input type="text" th:field="*{ano}" required inputmode="numeric" pattern="^\d{4}$" minlength="4" maxlength="4" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)" placeholder="Ex: 2021">
-                <label>Cor:</label>
+                <label class="req">Cor:</label>
                 <input type="text" th:field="*{cor}" required>
-                <label>Valor:</label>
+                <label class="req">Valor:</label>
                 <input type="text" class="money-input" th:field="*{valor}" required>
                 <label>Observação:</label>
                 <input type="text" th:field="*{observacao}">
-                <label>Fornecedor:</label>
-                <input type="text" th:field="*{fornecedor}" required>
-                <button type="submit" id="formSubmitBtn">Salvar</button>
+                <label class="req">Fornecedor:</label>
+                <select th:field="*{fornecedor.id}" required>
+                    <option value="" disabled selected>Selecione um fornecedor</option>
+                    <option th:each="f : ${fornecedores}" th:value="${f.id}" th:text="${f.nome}"></option>
+                </select>
+                <p th:if="${#lists.isEmpty(fornecedores)}" class="required-hint">Cadastre um fornecedor antes de cadastrar um veículo.</p>
+                <button type="submit" id="formSubmitBtn" th:attr="disabled=${#lists.isEmpty(fornecedores)}">Salvar</button>
             </form>
         </div>
     </div>

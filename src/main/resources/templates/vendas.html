@@ -1,29 +1,41 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>FindCar - Vendas</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <script src="../js/script.js" defer></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/script.js}" defer></script>
     <style>
-        #addSaleBtn {
-            padding: 10px 15px;
-            margin-bottom: 15px;
-            background-color: #1e90ff;
-            color: #fff;
-            border: none;
+        .alert {
+            padding: 10px 14px;
             border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.2s, transform 0.2s;
+            margin: 10px 0 16px 0;
         }
-        #addSaleBtn:hover {
-            background-color: #0d6efd;
-            transform: translateY(-2px);
+        .alert-success {
+            background: #e8f5e9;
+            color: #1b5e20;
+            border: 1px solid #c8e6c9;
         }
+        .alert-danger {
+            background: #ffebee;
+            color: #b71c1c;
+            border: 1px solid #ffcdd2;
+        }
+        .req::after {
+            content: " *";
+            color: #c62828;
+            font-weight: 700;
+        }
+        .required-hint {
+            margin: 0 0 10px 0;
+            color: #555;
+            font-size: 0.9rem;
+        }
+        .result-profit { color: #1b5e20; }
+        .result-loss { color: #b71c1c; }
     </style>
 </head>
-<body data-module="venda">
+<body>
     <header>
         <button class="menu-btn">&#9776;</button>
         <h1>FindCar - Vendas</h1>
@@ -31,57 +43,139 @@
 
     <div class="sidebar">
         <ul>
-            <li><a href="dashboard.html">Home</a></li>
-            <li><a href="veiculos.html">Veículos</a></li>
-            <li><a href="clientes.html">Clientes</a></li>
-            <li><a href="fornecedores.html">Fornecedores</a></li>
-            <li><a href="funcionarios.html">Funcionários</a></li>
-            <li><a href="vendas.html" class="active">Vendas</a></li>
+            <li><a th:href="@{/}">Home</a></li>
+            <li><a th:href="@{/veiculos}">Veículos</a></li>
+            <li><a th:href="@{/clientes}">Clientes</a></li>
+            <li><a th:href="@{/fornecedores}">Fornecedores</a></li>
+            <li><a th:href="@{/funcionarios}">Funcionários</a></li>
+            <li><a th:href="@{/vendas}" class="active">Vendas</a></li>
         </ul>
     </div>
 
     <main>
-        <button id="addSaleBtn" onclick="openForm('add','venda')">Registrar Venda</button>
+        <div th:if="${param.error}" class="alert alert-danger"
+             th:text="${param.error[0] == 'dados_invalidos' ? 'Preencha todos os campos obrigatórios.' : (param.error[0] == 'funcionario_invalido' ? 'Selecione um funcionário com cargo Gerente ou Vendedor.' : (param.error[0] == 'valor_invalido' ? 'Informe um valor de venda válido.' : 'Não foi possível concluir a operação.'))}">
+            Não foi possível concluir a operação.
+        </div>
+        <div th:if="${param.success}" class="alert alert-success"
+             th:text="${param.success[0] == 'cadastrado' ? 'Venda registrada com sucesso.' : 'Ação concluída.'}">
+            Ação concluída.
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+            <button id="addSaleBtn" onclick="document.getElementById('formModal').style.display='block'">Registrar Venda</button>
+            <button id="searchVendaBtn" onclick="toggleSaleSearch()" style="background-color: #6c757d; color: #fff;">Buscar Venda</button>
+        </div>
+
+        <div id="saleSearchPanel" style="display:none; border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <form th:action="@{/vendas}" method="get" data-server-form="true" style="display:grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 10px; align-items:end;">
+                <div>
+                    <label>Placa</label>
+                    <input type="text" name="placa" th:value="${param.placa}" placeholder="Ex: ABC-1B34" oninput="let vv=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7); this.value = vv.length>3 ? vv.slice(0,3)+'-'+vv.slice(3) : vv;">
+                </div>
+                <div>
+                    <label>Marca</label>
+                    <input type="text" name="marca" th:value="${param.marca}">
+                </div>
+                <div>
+                    <label>Modelo</label>
+                    <input type="text" name="modelo" th:value="${param.modelo}">
+                </div>
+                <div>
+                    <label>Cliente</label>
+                    <input type="text" name="cliente" th:value="${param.cliente}">
+                </div>
+                <div>
+                    <label>Funcionário</label>
+                    <input type="text" name="funcionario" th:value="${param.funcionario}">
+                </div>
+                <div>
+                    <label>Data Início</label>
+                    <input type="date" name="dataInicio" th:value="${param.dataInicio}">
+                </div>
+                <div>
+                    <label>Data Fim</label>
+                    <input type="date" name="dataFim" th:value="${param.dataFim}">
+                </div>
+                <div style="grid-column: 1 / -1; display:flex; gap:8px;">
+                    <button type="submit" style="padding: 8px 12px; background:#1e90ff; color:#fff; border:none; border-radius:6px;">Aplicar filtros</button>
+                    <a th:href="@{/vendas}" style="padding: 8px 12px; background:#f1f1f1; color:#333; border-radius:6px; text-decoration:none;">Limpar</a>
+                </div>
+            </form>
+        </div>
 
         <table class="data-table" id="vendasTable">
             <thead>
                 <tr>
-                    <th>Veículo</th>
-                    <th>Cliente</th>
-                    <th>Vendedor</th>
                     <th>Data</th>
-                    <th>Valor</th>
+                    <th>Placa</th>
+                    <th>Marca</th>
+                    <th>Modelo</th>
+                    <th>Ano</th>
+                    <th>Cliente</th>
+                    <th>Funcionário</th>
+                    <th>Valor Veículo</th>
+                    <th>Valor Venda</th>
+                    <th>Resultado</th>
                     <th>Ações</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+                <tr th:each="v : ${vendas}">
+                    <td th:text="${#temporals.format(v.dataVenda, 'dd/MM/yyyy')}"></td>
+                    <td th:text="${v.veiculo.placa}"></td>
+                    <td th:text="${v.veiculo.marca}"></td>
+                    <td th:text="${v.veiculo.modelo}"></td>
+                    <td th:text="${v.veiculo.ano}"></td>
+                    <td th:text="${v.cliente.nome}"></td>
+                    <td th:text="${v.funcionario.nome}"></td>
+                    <td class="valor-cell" th:text="${v.veiculo.valor}"></td>
+                    <td class="valor-cell" th:text="${v.valorVenda}"></td>
+                    <td class="valor-cell result-cell"
+                        th:attr="data-diff=${v.valorVenda.subtract(v.veiculo.valor)}"
+                        th:text="${v.valorVenda - v.veiculo.valor}"
+                        th:classappend="${v.valorVenda.compareTo(v.veiculo.valor) >= 0} ? ' result-profit' : ' result-loss'"></td>
+                    <td>
+                        <a th:href="@{|/vendas/excluir/${v.id}|}" onclick="return confirm('Tem certeza que deseja excluir esta venda?');">Excluir</a>
+                    </td>
+                </tr>
+            </tbody>
         </table>
     </main>
 
-    <!-- Modal Cadastro / Edição -->
     <div class="modal" id="formModal">
         <div class="modal-content">
             <span class="close" onclick="closeForm()">&times;</span>
             <h2 id="formTitle">Registrar Venda</h2>
-            <form id="saleForm">
-                <input type="hidden" id="vendaId">
-                <label>Veículo:</label>
-                <input type="text" id="vendaVeiculo" required>
-                <label>Cliente:</label>
-                <input type="text" id="vendaCliente" required>
-                <label>Vendedor:</label>
-                <input type="text" id="vendaVendedor" required>
-                <label>Data:</label>
-                <input type="date" id="vendaData" required>
-                <label>Valor:</label>
-                <input type="number" id="vendaValor" step="0.01" required>
+            <p class="required-hint">Campos marcados com <strong>*</strong> são obrigatórios.</p>
+            <form th:action="@{/vendas/novo}" th:object="${venda}" method="post" data-server-form="true">
+                <label class="req">Veículo:</label>
+                <select th:field="*{veiculo.placa}" required>
+                    <option value="" disabled selected>Selecione um veículo</option>
+                    <option th:each="ve : ${veiculosDisponiveis}" th:value="${ve.placa}" th:text="${ve.placa + ' - ' + ve.marca + ' ' + ve.modelo + ' (' + ve.ano + ')'}"></option>
+                </select>
+                <label class="req">Cliente:</label>
+                <select th:field="*{cliente.id}" required>
+                    <option value="" disabled selected>Selecione um cliente</option>
+                    <option th:each="c : ${clientes}" th:value="${c.id}" th:text="${c.nome}"></option>
+                </select>
+                <label class="req">Funcionário:</label>
+                <select th:field="*{funcionario.id}" required>
+                    <option value="" disabled selected>Selecione um funcionário</option>
+                    <option th:each="f : ${funcionarios}" th:value="${f.id}" th:text="${f.nome + ' - ' + f.cargo}"></option>
+                </select>
+                <label class="req">Data da Venda:</label>
+                <input type="date" th:field="*{dataVenda}" required>
+                <label class="req">Valor da Venda:</label>
+                <input type="text" class="money-input" th:field="*{valorVenda}" required>
+                <label>Observações:</label>
+                <input type="text" th:field="*{observacao}">
                 <button type="submit" id="formSubmitBtn">Salvar</button>
             </form>
         </div>
     </div>
 
-    <!-- Popup Confirmação Exclusão -->
-    <div class="modal" id="deleteModal">
+    <div class="modal" id="deleteModal" style="display:none;">
         <div class="modal-content">
             <h3>Tem certeza que deseja excluir esta venda?</h3>
             <button onclick="confirmDelete()">Confirmar</button>

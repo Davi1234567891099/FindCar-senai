@@ -13,7 +13,7 @@ import com.senai.findcar.repository.VeiculoRepository;
 @Service
 public class FornecedorService {
 
-    final String FORNECEDOR_COM_VEICULOS = "Fornecedor possui veículos vinculados, não é possível excluir";
+    private static final String FORNECEDOR_COM_VEICULOS = "Fornecedor possui veículos vinculados, não é possível excluir";
 
     @Autowired
     private VeiculoRepository veiculoRepository;

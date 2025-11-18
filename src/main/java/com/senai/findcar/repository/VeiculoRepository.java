@@ -1,6 +1,7 @@
 package com.senai.findcar.repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -14,7 +15,7 @@ import com.senai.findcar.models.Veiculo;
 
 public interface VeiculoRepository extends JpaRepository<Veiculo, String> {
 
-	Optional<Veiculo> findByFornecedor(Fornecedor fornecedor);
+	List<Veiculo> findByFornecedor(Fornecedor fornecedor);
 	Optional<Veiculo> findByChassi(String chassi);
 
 	@Query("""

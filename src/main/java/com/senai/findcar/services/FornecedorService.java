@@ -1,6 +1,6 @@
 package com.senai.findcar.services;
 
-import java.util.Optional;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,8 +19,8 @@ public class FornecedorService {
     private VeiculoRepository veiculoRepository;
 
     public void verificarFornecedorComVeiculos(Fornecedor fornecedor) {
-        Optional<Veiculo> veiculoOpt = veiculoRepository.findByFornecedor(fornecedor);
-        if(veiculoOpt.isPresent()) {
+        List<Veiculo> veiculos = veiculoRepository.findByFornecedor(fornecedor);
+        if(veiculos != null && !veiculos.isEmpty()) {
             throw new FornecedorComVeiculosException(FORNECEDOR_COM_VEICULOS);
         }
     }

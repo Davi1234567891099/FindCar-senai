@@ -151,6 +151,16 @@ button[id^="add"]:hover {
     background-color: #059669;
 }
 
+button[id^="search"] {
+    background-color: #6c757d;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+button[id^="search"]:hover {
+    background-color: #5c636a;
+}
+
 button[data-action="edit"] {
     background-color: #3b82f6;
     color: #fff;

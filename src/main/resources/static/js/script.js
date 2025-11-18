@@ -280,16 +280,89 @@ function openVehicleCreate() {
 // FORMATAÇÃO DE VALOR NA LISTA DE VEÍCULOS
 // ===========================
 document.addEventListener('DOMContentLoaded', () => {
-  const cells = document.querySelectorAll('#veiculosTable td.valor-cell');
-  if (!cells.length) return;
+  const formatTableCurrency = (selector) => {
+    const cells = document.querySelectorAll(selector);
+    cells.forEach(td => {
+      const raw = (td.textContent || '').toString().trim();
+      const num = parseCurrencyFlexible(raw);
+      if (isNaN(num)) return;
+      td.textContent = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    });
+  };
+  formatTableCurrency('#veiculosTable td.valor-cell');
+  formatTableCurrency('#vendasTable td.valor-cell');
 
-  cells.forEach(td => {
-    const raw = (td.textContent || '').toString().trim();
-    const num = parseCurrencyFlexible(raw);
-    if (isNaN(num)) return;
-    td.textContent = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  // Ajustar especificamente a coluna de RESULTADO em vendas para garantir sinal negativo antes do símbolo
+  const resultCells = document.querySelectorAll('#vendasTable td.result-cell');
+  resultCells.forEach(td => {
+    const diffAttr = td.getAttribute('data-diff');
+    if (!diffAttr) return;
+    let num = Number(diffAttr);
+    if (isNaN(num)) num = parseCurrencyFlexible(diffAttr);
+    const abs = Math.abs(num);
+    const brl = abs.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    td.textContent = (num < 0 ? '-' : '') + brl.replace(/^-/, '');
   });
 });
+
+// ===========================
+// FORMATAÇÃO DE CPF/CNPJ NA LISTAGEM DE FORNECEDORES
+// ===========================
+function formatCPFFromDigits(digits) {
+  const d = onlyDigits(String(digits || ''));
+  if (d.length !== 11) return digits;
+  return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+}
+
+function formatCNPJFromDigits(digits) {
+  const d = onlyDigits(String(digits || ''));
+  if (d.length !== 14) return digits;
+  return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const docCells = document.querySelectorAll('#fornecedoresTable td.doc-cpf, #fornecedoresTable td.doc-cnpj, #clientesTable td.doc-cpf, #clientesTable td.doc-cnpj, #funcionariosTable td.doc-cpf');
+  if (!docCells.length) return;
+  docCells.forEach(td => {
+    const txt = (td.textContent || '').toString().trim();
+    if (!txt) return;
+    if (td.classList.contains('doc-cpf')) {
+      td.textContent = formatCPFFromDigits(txt);
+    } else if (td.classList.contains('doc-cnpj')) {
+      td.textContent = formatCNPJFromDigits(txt);
+    }
+  });
+});
+
+function toggleVehicleSearch() {
+  const panel = document.getElementById('vehicleSearchPanel');
+  if (!panel) return;
+  panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+}
+
+function toggleSupplierSearch() {
+  const panel = document.getElementById('supplierSearchPanel');
+  if (!panel) return;
+  panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+}
+
+function toggleClientSearch() {
+  const panel = document.getElementById('clientSearchPanel');
+  if (!panel) return;
+  panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+}
+
+function toggleEmployeeSearch() {
+  const panel = document.getElementById('employeeSearchPanel');
+  if (!panel) return;
+  panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+}
+
+function toggleSaleSearch() {
+  const panel = document.getElementById('saleSearchPanel');
+  if (!panel) return;
+  panel.style.display = (panel.style.display === 'none' || panel.style.display === '') ? 'block' : 'none';
+}
 
 function openCarEdit(anchorEl) {
   const modal = document.getElementById('formModal');
@@ -303,7 +376,7 @@ function openCarEdit(anchorEl) {
   if (submitBtn) submitBtn.innerText = 'Atualizar';
 
   if (form) {
-    form.setAttribute('action', `/veiculos/atualizar/${d.id}`);
+    form.setAttribute('action', `/veiculos/atualizar/${d.placa}`);
     form.setAttribute('method', 'post');
     form.setAttribute('data-server-form', 'true');
 
@@ -312,12 +385,14 @@ function openCarEdit(anchorEl) {
       if (input) input.value = value || '';
     };
 
-    setField('id', d.id);
+    setField('id', d.placa);
     setField('marca', d.marca);
     setField('modelo', d.modelo);
     setField('ano', d.ano);
     setField('cor', d.cor);
     setField('placa', d.placa);
+    setField('chassi', d.chassi);
+    setField('fornecedor.id', d.fornecedorId);
     // garantir máscara de placa após preencher via código
     const placaInput = form.querySelector('input[name="placa"]');
     if (placaInput) {
@@ -389,6 +464,44 @@ document.addEventListener('submit', (e) => {
   const form = e.target;
   if (!(form instanceof HTMLFormElement)) return;
   if (!form.hasAttribute('data-server-form')) return;
+
+  // Confirmação para edição (atualização)
+  try {
+    const action = String(form.getAttribute('action') || '');
+    if (action.includes('/veiculos/atualizar/') || action.includes('/fornecedores/atualizar/') || action.includes('/clientes/atualizar/') || action.includes('/funcionarios/atualizar/')) {
+      const ok = window.confirm('Tem certeza que deseja salvar as alterações?');
+      if (!ok) {
+        e.preventDefault();
+        return;
+      }
+    }
+  } catch (_) {}
+
+  // Normalizar CPF/CNPJ (apenas dígitos) antes de enviar
+  try {
+    const cpf = form.querySelector('input[name="cpf"]');
+    if (cpf && cpf.value) {
+      cpf.value = (cpf.value || '').replace(/\D+/g, '');
+    }
+    const cnpj = form.querySelector('input[name="cnpj"]');
+    if (cnpj && cnpj.value) {
+      cnpj.value = (cnpj.value || '').replace(/\D+/g, '');
+    }
+
+    // Se formulário de fornecedor, limpar documento não selecionado
+    const action = String(form.getAttribute('action') || '');
+    if (action.includes('/fornecedores/') || action.includes('/clientes/')) {
+      const tipoRadio = form.querySelector('input[name="tipoPessoa"]:checked');
+      if (tipoRadio) {
+        if (tipoRadio.value === 'F' && cnpj) {
+          cnpj.value = '';
+        } else if (tipoRadio.value === 'J' && cpf) {
+          cpf.value = '';
+        }
+      }
+    }
+  } catch (_) {}
+
   const moneyInputs = form.querySelectorAll('input.money-input');
   moneyInputs.forEach((inp) => {
     const txt = (inp.value || '').trim();
@@ -400,3 +513,187 @@ document.addEventListener('submit', (e) => {
     }
   });
 });
+
+// ===========================
+// FORNECEDORES - criar/editar via modal
+// ===========================
+function openSupplierCreate() {
+  const modal = document.getElementById('formModal');
+  if (!modal) return;
+  const form = modal.querySelector('form');
+  const title = document.getElementById('formTitle');
+  const submitBtn = document.getElementById('formSubmitBtn');
+  if (title) title.innerText = 'Adicionar Fornecedor';
+  if (submitBtn) submitBtn.innerText = 'Salvar';
+  if (form) {
+    form.setAttribute('action', '/fornecedores/novo');
+    form.setAttribute('method', 'post');
+    form.setAttribute('data-server-form', 'true');
+    form.reset();
+    // Default: Pessoa Física
+    const pfRadio = form.querySelector('input[name="tipoPessoa"][value="F"]');
+    if (pfRadio) {
+      pfRadio.checked = true;
+      if (typeof window.setPessoaType === 'function') window.setPessoaType('F');
+    }
+  }
+  modal.style.display = 'block';
+}
+
+function openSupplierEdit(anchorEl) {
+  const modal = document.getElementById('formModal');
+  if (!modal) return;
+  const form = modal.querySelector('form');
+  const title = document.getElementById('formTitle');
+  const submitBtn = document.getElementById('formSubmitBtn');
+  const d = anchorEl.dataset;
+
+  if (title) title.innerText = 'Atualizar Fornecedor';
+  if (submitBtn) submitBtn.innerText = 'Atualizar';
+
+  if (form) {
+    form.setAttribute('action', `/fornecedores/atualizar/${d.id}`);
+    form.setAttribute('method', 'post');
+    form.setAttribute('data-server-form', 'true');
+
+    const setField = (name, value) => {
+      const input = form.querySelector(`[name="${name}"]`);
+      if (input) input.value = value || '';
+    };
+
+    setField('nome', d.nome);
+    setField('cnpj', d.cnpj);
+    setField('cpf', d.cpf);
+    setField('telefone', d.telefone);
+    setField('email', d.email);
+    setField('endereco', d.endereco);
+
+    // Determina tipo de pessoa pela presença de CNPJ
+    const isPJ = (d.cnpj || '').toString().trim().length > 0;
+    const tipoVal = isPJ ? 'J' : 'F';
+    const tipoRadio = form.querySelector(`input[name="tipoPessoa"][value="${tipoVal}"]`);
+    if (tipoRadio) {
+      tipoRadio.checked = true;
+      if (typeof window.setPessoaType === 'function') window.setPessoaType(tipoVal);
+    }
+  }
+
+  modal.style.display = 'block';
+}
+
+// ===========================
+// CLIENTES - criar/editar via modal
+// ===========================
+function openClientCreate() {
+  const modal = document.getElementById('formModal');
+  if (!modal) return;
+  const form = modal.querySelector('form');
+  const title = document.getElementById('formTitle');
+  const submitBtn = document.getElementById('formSubmitBtn');
+  if (title) title.innerText = 'Adicionar Cliente';
+  if (submitBtn) submitBtn.innerText = 'Salvar';
+  if (form) {
+    form.setAttribute('action', '/clientes/novo');
+    form.setAttribute('method', 'post');
+    form.setAttribute('data-server-form', 'true');
+    form.reset();
+    const pfRadio = form.querySelector('input[name="tipoPessoa"][value="F"]');
+    if (pfRadio) {
+      pfRadio.checked = true;
+      if (typeof window.setPessoaTypeCliente === 'function') window.setPessoaTypeCliente('F');
+    }
+  }
+  modal.style.display = 'block';
+}
+
+function openClientEdit(anchorEl) {
+  const modal = document.getElementById('formModal');
+  if (!modal) return;
+  const form = modal.querySelector('form');
+  const title = document.getElementById('formTitle');
+  const submitBtn = document.getElementById('formSubmitBtn');
+  const d = anchorEl.dataset;
+
+  if (title) title.innerText = 'Atualizar Cliente';
+  if (submitBtn) submitBtn.innerText = 'Atualizar';
+
+  if (form) {
+    form.setAttribute('action', `/clientes/atualizar/${d.id}`);
+    form.setAttribute('method', 'post');
+    form.setAttribute('data-server-form', 'true');
+
+    const setField = (name, value) => {
+      const input = form.querySelector(`[name="${name}"]`);
+      if (input) input.value = value || '';
+    };
+
+    setField('nome', d.nome);
+    setField('cnpj', d.cnpj);
+    setField('cpf', d.cpf);
+    setField('telefone', d.telefone);
+    setField('email', d.email);
+    setField('endereco', d.endereco);
+
+    const isPJ = (d.cnpj || '').toString().trim().length > 0;
+    const tipoVal = isPJ ? 'J' : 'F';
+    const tipoRadio = form.querySelector(`input[name="tipoPessoa"][value="${tipoVal}"]`);
+    if (tipoRadio) {
+      tipoRadio.checked = true;
+      if (typeof window.setPessoaTypeCliente === 'function') window.setPessoaTypeCliente(tipoVal);
+    }
+  }
+
+  modal.style.display = 'block';
+}
+
+// ===========================
+// FUNCIONÁRIOS - criar/editar via modal
+// ===========================
+function openEmployeeCreate() {
+  const modal = document.getElementById('formModal');
+  if (!modal) return;
+  const form = modal.querySelector('form');
+  const title = document.getElementById('formTitle');
+  const submitBtn = document.getElementById('formSubmitBtn');
+  if (title) title.innerText = 'Adicionar Funcionário';
+  if (submitBtn) submitBtn.innerText = 'Salvar';
+  if (form) {
+    form.setAttribute('action', '/funcionarios/novo');
+    form.setAttribute('method', 'post');
+    form.setAttribute('data-server-form', 'true');
+    form.reset();
+  }
+  modal.style.display = 'block';
+}
+
+function openEmployeeEdit(anchorEl) {
+  const modal = document.getElementById('formModal');
+  if (!modal) return;
+  const form = modal.querySelector('form');
+  const title = document.getElementById('formTitle');
+  const submitBtn = document.getElementById('formSubmitBtn');
+  const d = anchorEl.dataset;
+
+  if (title) title.innerText = 'Atualizar Funcionário';
+  if (submitBtn) submitBtn.innerText = 'Atualizar';
+
+  if (form) {
+    form.setAttribute('action', `/funcionarios/atualizar/${d.id}`);
+    form.setAttribute('method', 'post');
+    form.setAttribute('data-server-form', 'true');
+
+    const setField = (name, value) => {
+      const input = form.querySelector(`[name="${name}"]`);
+      if (input) input.value = value || '';
+    };
+
+    setField('nome', d.nome);
+    setField('cpf', d.cpf);
+    setField('cargo', d.cargo);
+    setField('telefone', d.telefone);
+    setField('email', d.email);
+    setField('endereco', d.endereco);
+  }
+
+  modal.style.display = 'block';
+}
